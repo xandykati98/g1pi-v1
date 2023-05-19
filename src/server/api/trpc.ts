@@ -6,7 +6,6 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-
 /**
  * 1. CONTEXT
  *
@@ -18,8 +17,8 @@ import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 
 import { prisma } from "~/server/db";
 
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-const supabase = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL as string, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string);
+import { createClient } from '@supabase/supabase-js';
+export const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL as string, process.env.SUPABASE_SERVICE as string);
 
 /**
  * This is the actual context you will use in your router. It will be used to process every request

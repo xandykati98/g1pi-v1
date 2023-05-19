@@ -1,61 +1,305 @@
 
-import { Auth } from '@supabase/auth-ui-react'
 import styles from './login.module.css'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
+import { MouseEventHandler, useEffect, useRef, useState } from 'react'
+import { api } from "~/utils/api";
+
+enum AuthView {
+  LOGIN = 'sign_in',
+  SIGNUP = 'sign_up',
+  FORGOT_PASSWORD = 'forgot_password',
+}
 
 const Login = () => {
-    const supabaseClient = useSupabaseClient()
-    return <>
-      <main className={styles.mainLogin}>
-        <Auth
-          appearance={{ theme: ThemeSupa }}
-          supabaseClient={supabaseClient}
-          providers={[]}
-          socialLayout="horizontal"
-          localization={{
-            variables: {
-              "sign_up": {
-                "email_label": "Email",
-                "password_label": "Senha",
-                "email_input_placeholder": "Seu endereço de email",
-                "password_input_placeholder": "Sua senha",
-                "button_label": "Criar conta",
-                "loading_button_label": "Criando ...",
-                "social_provider_text": "Sign in with {{provider}}",
-                "link_text": "Não possui uma conta? Clique aqui para criar uma",
-                "confirmation_text": "Check your email for the confirmation link"
-              },
-              "sign_in": {
-                "email_label": "Email",
-                "password_label": "Senha",
-                "email_input_placeholder": "Seu endereço de email",
-                "password_input_placeholder": "Sua senha",
-                "button_label": "Entrar em PsychLink",
-                "loading_button_label": "Entrando ...",
-                "social_provider_text": "Sign in with {{provider}}",
-                "link_text": "Já Possui uma conta? Entre"
-              },
-              "forgotten_password": {
-                "email_label": "Email address",
-                "password_label": "Your Password",
-                "email_input_placeholder": "Your email address",
-                "button_label": "Send reset password instructions",
-                "loading_button_label": "Sending reset instructions ...",
-                "link_text": "Esqueceu sua senha?",
-                "confirmation_text": "Check your email for the password reset link"
-              },
-              "update_password": {
-                "password_label": "New password",
-                "password_input_placeholder": "Your new password",
-                "button_label": "Update password",
-                "loading_button_label": "Updating password ...",
-                "confirmation_text": "Your password has been updated"
-              }
-            }
-          }}
-        />
-      </main>
-    </>
+
+  const createUser = api.user.createUser.useMutation()
+
+  const [view, setView] = useState<AuthView>(AuthView.LOGIN)
+
+  const view_to_title = {
+    sign_in: 'Entre na sua conta',
+    sign_up: 'Cadastre-se',
+    forgot_password: 'Recuperar senha',
+
+  }
+  return <>
+    <main className={styles.mainLogin}>
+      
+      <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+          
+          <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+            {view_to_title[view]}
+          </h2>
+        </div>
+        {
+          view === AuthView.LOGIN && <LoginView setView={setView}/>
+        }
+        {
+          view === AuthView.FORGOT_PASSWORD && <PasswordView setView={setView}/>
+        }
+        {
+          view === AuthView.SIGNUP && <SignupView createUser={createUser} setView={setView}/>
+        }
+      </div>
+    </main>
+  </>
 }
+
+export function PasswordView({setView}: {setView: (view: AuthView) => void}) {
+  
+  const supabaseClient = useSupabaseClient()
+  const formRef = useRef<HTMLFormElement>(null)
+  const resetPass:MouseEventHandler<HTMLButtonElement> = async (e) => {
+    e.preventDefault()
+    try {
+      const form = formRef.current
+      if (form) {
+        const { data, error } = await supabaseClient.auth.resetPasswordForEmail(form.email.value)
+        if (error) {
+          alert(error.message)
+        } else {
+          alert('Email enviado')
+        }
+      }
+    } catch (error) {
+      alert(error)
+    }
+  }
+  return (
+    <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+      <form className="space-y-6" action="#" method="POST" ref={formRef}>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+            Email
+          </label>
+          <div className="mt-2">
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+
+        <div>
+          <button
+            type="submit"
+            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            onClick={resetPass}
+          >
+            Enviar
+          </button>
+        </div>
+      </form>
+      
+      <p className="mt-10 text-center text-sm text-gray-500">
+        
+        <a href="#" onClick={() => setView(AuthView.LOGIN)} className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+          Voltar para o login
+        </a>
+      </p>
+    </div>
+  )
+}
+
+export function SignupView({setView, createUser}: {setView: (view: AuthView) => void, createUser: ReturnType<typeof api.user.createUser.useMutation>}) {
+
+  const supabaseClient = useSupabaseClient()
+  const formRef = useRef<HTMLFormElement>(null)
+  const createAccount:MouseEventHandler<HTMLButtonElement> = async (e) => {
+    e.preventDefault()
+    const form = formRef.current
+    if (form) {
+      createUser.mutate({
+        email: form.email.value, 
+        password: form.password.value,
+        nome: form.nome.value
+      })
+    } else {
+      alert('Preencha o formulário.')
+    }
+  }
+  useEffect(() => {
+    if (createUser.isSuccess) {
+      alert('Usuário criado com sucesso!')
+      supabaseClient.auth.signInWithPassword({
+        email: createUser.data?.email || '',
+        password: createUser.data?.password || ''
+      })
+    }
+  }, [createUser.isSuccess])
+  useEffect(() => {
+    if (createUser.isError) {
+      alert(createUser.error?.message)
+    }
+  }, [createUser.isError])
+  return (
+    <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+      <form className="space-y-6" action="#" method="POST" ref={formRef}>
+      <div>
+          <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+            Nome
+          </label>
+          <div className="mt-2">
+            <input
+              id="nome"
+              name="nome"
+              type="text"
+              autoComplete="name"
+              required
+              className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+            Email
+          </label>
+          <div className="mt-2">
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+              Senha
+            </label>
+          </div>
+          <div className="mt-2">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+
+        <div>
+          <button
+            disabled={createUser.isLoading}
+            type="submit"
+            onClick={createAccount}
+            className={`
+            ${createUser.isLoading && 'cursor-not-allowed opacity-50 pointer-events-none'}
+            flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`} 
+          >
+            Criar conta
+          </button>
+        </div>
+      </form>
+      <p className="mt-10 text-center text-sm text-gray-500">
+        <a href="#" onClick={() => setView(AuthView.LOGIN)} className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+          Voltar para o login
+        </a>
+      </p>
+    </div>
+  )
+}
+
+export function LoginView({setView}: {setView: (view: AuthView) => void}) {
+  const supabaseClient = useSupabaseClient()
+  const formRef = useRef<HTMLFormElement>(null)
+  const [loading, setLoading] = useState(false)
+  const signIn:MouseEventHandler<HTMLButtonElement> = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    const form = formRef.current
+    if (form) {
+      try {
+        const { error } = await supabaseClient.auth.signInWithPassword({
+          email: form.email.value,
+          password: form.password.value
+        })
+        if (error) {
+          alert(error.message)
+        }
+      } catch (error) {
+        alert(error)
+      }
+    } else {
+      alert('Preencha o formulário.')
+    }
+    setLoading(false)
+  }
+  return (
+    <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+      <form className="space-y-6" action="#" method="POST" ref={formRef}>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+            Email
+          </label>
+          <div className="mt-2">
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+              Senha
+            </label>
+            <div className="text-sm">
+              <a href="#" onClick={() => setView(AuthView.FORGOT_PASSWORD)} className="font-semibold text-indigo-600 hover:text-indigo-500">
+                Esqueceu sua senha?
+              </a>
+            </div>
+          </div>
+          <div className="mt-2">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+
+        <div>
+          <button
+          onClick={signIn}
+            type="submit"
+            className={`
+            ${loading && 'cursor-not-allowed opacity-50 pointer-events-none'}
+            flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`} 
+          >
+            Entrar
+          </button>
+        </div>
+      </form>
+
+      <p className="mt-10 text-center text-sm text-gray-500">
+        Não possui cadastro?{' '}
+        <a href="#" onClick={() => setView(AuthView.SIGNUP)} className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+          Clique aqui para se cadastrar
+        </a>
+      </p>
+    </div>
+  )
+}
+
 export default Login
