@@ -15,7 +15,7 @@ function MyApp({
 }>) {
   // Create a new supabase browser client on every first render.
   const [supabaseClient] = useState(() => createBrowserSupabaseClient())
-  const getLayout = (Component as unknown as any).getLayout || ((page: ReactNode) => page);
+  const getLayout: (page: ReactNode) => ReactNode = (Component as unknown as { getLayout: () => ReactNode }).getLayout || ((page: ReactNode) => page);
   return (
     <SessionContextProvider
       supabaseClient={supabaseClient}

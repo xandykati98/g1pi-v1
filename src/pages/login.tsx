@@ -45,26 +45,31 @@ const Login = () => {
     </main>
   </>
 }
-
+type FormField = { value: string }
 export function PasswordView({setView}: {setView: (view: AuthView) => void}) {
   
   const supabaseClient = useSupabaseClient()
   const formRef = useRef<HTMLFormElement>(null)
-  const resetPass:MouseEventHandler<HTMLButtonElement> = async (e) => {
+  const resetPass:MouseEventHandler<HTMLButtonElement> | Promise<void> = (e) => {
     e.preventDefault()
     try {
       const form = formRef.current
       if (form) {
-        const { data, error } = await supabaseClient.auth.resetPasswordForEmail(form.email.value)
-        if (error) {
-          alert(error.message)
-        } else {
-          alert('Email enviado')
-        }
+
+        supabaseClient.auth.resetPasswordForEmail((form.email as FormField).value)
+          .then(({ data, error }) => {
+            if (error) {
+              alert(error.message)
+            } else {
+              alert('Email enviado')
+            }
+          })
+          .catch(console.log)
       }
     } catch (error) {
       alert(error)
     }
+    return
   }
   return (
     <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -110,18 +115,19 @@ export function SignupView({setView, createUser}: {setView: (view: AuthView) => 
 
   const supabaseClient = useSupabaseClient()
   const formRef = useRef<HTMLFormElement>(null)
-  const createAccount:MouseEventHandler<HTMLButtonElement> = async (e) => {
+  const createAccount:MouseEventHandler<HTMLButtonElement> | Promise<void> = (e) => {
     e.preventDefault()
     const form = formRef.current
     if (form) {
       createUser.mutate({
-        email: form.email.value, 
-        password: form.password.value,
-        nome: form.nome.value
+        email: (form.email as FormField).value, 
+        password: (form.password as FormField).value,
+        nome: (form.nome as FormField).value
       })
     } else {
       alert('Preencha o formulário.')
     }
+    return
   }
   useEffect(() => {
     if (createUser.isSuccess) {
@@ -129,6 +135,10 @@ export function SignupView({setView, createUser}: {setView: (view: AuthView) => 
       supabaseClient.auth.signInWithPassword({
         email: createUser.data?.email || '',
         password: createUser.data?.password || ''
+      }).then((res) => {
+        console.log({res})
+      }).catch((err) => {
+        alert(err)
       })
     }
   }, [createUser.isSuccess])
@@ -196,7 +206,7 @@ export function SignupView({setView, createUser}: {setView: (view: AuthView) => 
             type="submit"
             onClick={createAccount}
             className={`
-            ${createUser.isLoading && 'cursor-not-allowed opacity-50 pointer-events-none'}
+            ${createUser.isLoading ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''} 
             flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`} 
           >
             Criar conta
@@ -216,26 +226,29 @@ export function LoginView({setView}: {setView: (view: AuthView) => void}) {
   const supabaseClient = useSupabaseClient()
   const formRef = useRef<HTMLFormElement>(null)
   const [loading, setLoading] = useState(false)
-  const signIn:MouseEventHandler<HTMLButtonElement> = async (e) => {
+  const signIn:MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault()
     setLoading(true)
     const form = formRef.current
     if (form) {
       try {
-        const { error } = await supabaseClient.auth.signInWithPassword({
-          email: form.email.value,
-          password: form.password.value
-        })
-        if (error) {
-          alert(error.message)
-        }
+        supabaseClient.auth.signInWithPassword({
+          email: (form.email as FormField).value,
+          password: (form.password as FormField).value
+        }).then(({ error }) => {
+          if (error) {
+            alert(error.message)
+          }
+        }).finally(() => {    
+          setLoading(false)
+        }).catch(console.log)
       } catch (error) {
         alert(error)
       }
     } else {
       alert('Preencha o formulário.')
     }
-    setLoading(false)
+    return
   }
   return (
     <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -284,7 +297,7 @@ export function LoginView({setView}: {setView: (view: AuthView) => void}) {
           onClick={signIn}
             type="submit"
             className={`
-            ${loading && 'cursor-not-allowed opacity-50 pointer-events-none'}
+            ${loading ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''}
             flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`} 
           >
             Entrar
