@@ -16,7 +16,7 @@ export const userRouter = createTRPCRouter({
             password: input.password,
         })
         if (createUserError) {
-            throw new Error(createUserError.message)
+            throw new Error('createUserError: '+createUserError.message)
         }
         if (createUserData.user) {
             const { error: upsertError } = await supabase
@@ -24,13 +24,14 @@ export const userRouter = createTRPCRouter({
                 .upsert({ 
                     id: createUserData.user.id,
                     nome: input.nome,
+                    email: input.email,
                     createdAt: createUserData.user.created_at,
                     isAdmin: false,
-                    isActive: false,
+                    isFuncionario: false,
                     isCliente: false,
                 })
             if (upsertError) {
-                throw new Error(upsertError.message)
+                throw new Error('upsertError: '+upsertError.message)
             }
         }
         return { password: input.password, email: input.email }

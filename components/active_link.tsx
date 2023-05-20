@@ -1,7 +1,13 @@
 import { useRouter } from 'next/router'
 import { CSSProperties } from 'react';
 
-function ActiveLink({ children, href, activeStyle, className }: { className?: string, children: React.ReactNode; href: string, activeStyle?: CSSProperties }) {
+function ActiveLink({ children, href, activeStyle, className, activeClassName }: { 
+    className?: string, 
+    children: React.ReactNode,
+    href: string, 
+    activeStyle?: CSSProperties,
+    activeClassName?: string 
+}) {
     const router = useRouter()
     const style = {
         ...(router.asPath === href ? activeStyle : {})
@@ -14,9 +20,9 @@ function ActiveLink({ children, href, activeStyle, className }: { className?: st
           console.error('Navigation error:', error)
         })
     }
-
+    const classNames = router.asPath === href ? `${className||''} ${activeClassName||''}` : className
     return (
-        <a href={href} onClick={handleClick} style={style} className={className}>
+        <a href={href} onClick={handleClick} style={style} className={classNames}>
             {children}
         </a>
     )

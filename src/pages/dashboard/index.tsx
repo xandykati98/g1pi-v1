@@ -13,21 +13,37 @@ import {
 } from "components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "components/ui/tabs"
 import { CalendarDateRangePicker } from "components/dashboard/date-range-picker"
-import { MainNav } from "components/dashboard/main-nav"
+import { MainNav } from "components/dashboard/main-nav2"
 import { Overview } from "components/dashboard/overview"
 import { RecentSales } from "components/dashboard/recent-sales"
 import { Search } from "components/dashboard/search"
 import TeamSwitcher from "components/dashboard/team-switcher"
 import { UserNav } from "components/dashboard/user-nav"
 import { api } from '~/utils/api';
-
+import { dateToDDMMYYYY } from '~/utils/datestuff';
+import Analytics from 'components/dashboard/analytics';
+import { useContext } from 'react';
+import AuthContext from 'components/auth_context';
 
 export default function Page() {
-    const hello = api.example.hello.useQuery({ text: "from tRPC" });
+    const auth_context = useContext(AuthContext)
+    
     const { data: agendamentosCount, error: agendamentosCountError} = api.agendamento.countAgendamentosEsseMes.useQuery();
     
-    if (hello.isLoading) return <div>Loading...</div>
-    if (hello.error) return <div>Error: {hello.error.message}</div>
+    const { data: rendaHojeData, error: rendaHojeError, isLoading: isLoadingRenda } = api.agendamento.getRendaHoje.useQuery();
+
+    const { data: agendamentosRecentes, error: errorAgendamentosRecentes, isLoading: isLoadingAgendamentosRecentes } =  api.agendamento.getAgendamentosRecentes.useQuery()
+
+    const { data: agendamentosHoje, error: agendamentosHojeError, isLoading: isLoadingAgendamentosHoje } = api.agendamento.getAgendamentosHoje.useQuery();
+
+    const rendaHoje = rendaHojeData?.reduce((prev, curr) => { prev+=curr.preco ;return prev;}, 0) || 0;
+
+    if (agendamentosCountError) return <div>Error: {agendamentosCountError.message}</div>
+    if (rendaHojeError) return <div>Error: {rendaHojeError.message}</div>
+    if (agendamentosHojeError) return <div>Error: {agendamentosHojeError.message}</div>
+    if (errorAgendamentosRecentes) return <div>Error: {errorAgendamentosRecentes.message}</div>
+
+    const nextAgendamento = agendamentosRecentes?.[0];
 
     return <div className="flex-1 space-y-4 p-8 pt-6">
     <div className="flex items-center justify-between space-y-2">
@@ -42,15 +58,9 @@ export default function Page() {
     </div>
     <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analytics">
+            <TabsTrigger value="overview">Visão geral</TabsTrigger>
+            <TabsTrigger value="analytics" disabled={!auth_context.isAdmin}>
                 Analytics
-            </TabsTrigger>
-            <TabsTrigger value="reports" disabled>
-                Reports
-            </TabsTrigger>
-            <TabsTrigger value="notifications" disabled>
-                Notifications
             </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
@@ -58,83 +68,84 @@ export default function Page() {
             <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                Total Revenue
+                Renda estimada hoje
                 </CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">$45,231.89</div>
+                <div className="text-2xl font-bold">{isLoadingRenda ? 'Carregando...' : `R$ ${rendaHoje}`}</div>
                 <p className="text-xs text-muted-foreground">
-                +20.1% from last month
+                Soma de todos os valores de agendamentos de hoje
                 </p>
             </CardContent>
             </Card>
             <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                Subscriptions
+                Agendamentos hoje
                 </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">+2350</div>
+                <div className="text-2xl font-bold">{ isLoadingAgendamentosHoje ? 'Carregando...' : agendamentosHoje.total }</div>
                 <p className="text-xs text-muted-foreground">
-                +180.1% from last month
+                    Agendamentos <b>confirmados:</b> { isLoadingAgendamentosHoje ? 'Carregando...' : agendamentosHoje.confirmados }
                 </p>
             </CardContent>
             </Card>
             <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Sales</CardTitle>
+                <CardTitle className="text-sm font-medium">Próximo agendamento</CardTitle>
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">+12,234</div>
+                <div className="text-2xl font-bold">{nextAgendamento ? nextAgendamento?.funcionario.nome : 'Indef.'}</div>
                 <p className="text-xs text-muted-foreground">
-                +19% from last month
+                {nextAgendamento ? `Cliente: ${nextAgendamento.cliente.nome}, Data: ${dateToDDMMYYYY(new Date(nextAgendamento.data))}` : 'Nenhum agendamento próximo'}
                 </p>
             </CardContent>
             </Card>
             <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                Active Now
+                Visitas no site
                 </CardTitle>
                 <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">+573</div>
+                <div className="text-2xl font-bold">0</div>
                 <p className="text-xs text-muted-foreground">
-                +201 since last hour
+                Campo desabilitado 
                 </p>
             </CardContent>
             </Card>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
-            <CardHeader>
-                <CardTitle>Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="pl-2">
-                <Overview />
-            </CardContent>
+                <CardHeader>
+                    <CardTitle>Agendamentos anuais</CardTitle>
+                </CardHeader>
+                <CardContent className="pl-2">
+                    <Overview />
+                </CardContent>
             </Card>
             <Card className="col-span-3">
-            <CardHeader>
-                <CardTitle>Agendamentos Próximos</CardTitle>
-                <CardDescription>
-                {
-                    agendamentosCountError ? 'Erro ao carregar os agendamentos deste mês' : agendamentosCount ? `Um total de ${agendamentosCount} agendamentos estão marcados para este mês` : 'Carregando...'
-                }
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <RecentSales />
-            </CardContent>
+                <CardHeader>
+                    <CardTitle>Agendamentos Próximos</CardTitle>
+                    <CardDescription>
+                    {
+                        agendamentosCountError ? 'Erro ao carregar os agendamentos deste mês' : agendamentosCount ? `Um total de ${agendamentosCount} agendamentos estão marcados para este mês` : 'Carregando...'
+                    }
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RecentSales data={agendamentosRecentes || []} isLoading={isLoadingAgendamentosRecentes} />
+                </CardContent>
             </Card>
         </div>
         </TabsContent>
         <TabsContent value="analytics">
+            <Analytics/>
         </TabsContent>
     </Tabs>
     </div>

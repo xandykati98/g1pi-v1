@@ -31,9 +31,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex-col">
             <div className="border-b">
             <div className="flex h-16 items-center px-4">
-                <TeamSwitcher />
                 <div className="flex w-full">
-                <div>
+                <div className="pl-4">
                     <MainNav />
                 </div>
                 </div>

@@ -10,7 +10,7 @@ export const funcionarioRouter = createTRPCRouter({
             return await ctx.prisma.user.findFirst({
                 where: {
                     id: input.id,
-                    isActive: true,
+                    isFuncionario: true,
                 }
             })
         } else {

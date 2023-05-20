@@ -14,9 +14,10 @@ datasource db {
 model User {
     id          String  @id @default(uuid())
     nome        String
+    email       String  @unique
     createdAt   DateTime @default(now())
     isAdmin     Boolean @default(false)
-    isActive    Boolean @default(false)
+    isFuncionario    Boolean @default(false)
     isCliente   Boolean @default(false)
     FuncionarioAgendamentos Agendamento[] @relation(name: "FuncionarioAgendamentos")
     ClienteAgendamentos Agendamento[] @relation(name: "ClienteAgendamentos")

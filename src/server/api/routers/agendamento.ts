@@ -1,51 +1,87 @@
 import { createTRPCRouter, publicProcedure, privateProcedure, supabase } from '../trpc'
 import { z } from 'zod'
 import { faker } from '@faker-js/faker';
-/**
+import { Agendamento } from '@prisma/client';
 
-model User {
-    id          String  @id @default(uuid())
-    nome        String
-    createdAt   DateTime @default(now())
-    isAdmin     Boolean @default(false)
-    isActive    Boolean @default(false)
-    isCliente   Boolean @default(false)
-    FuncionarioAgendamentos Agendamento[] @relation(name: "FuncionarioAgendamentos")
-    ClienteAgendamentos Agendamento[] @relation(name: "ClienteAgendamentos")
+export interface AgendamentoRecente extends Agendamento {
+    funcionario: {
+        nome: string
+    }
+    cliente: {
+        nome: string
+    }
 }
 
-model Agendamento {
-    id            String        @id @default(uuid())
-    data          DateTime
-    descricao     String
-    createdAt     DateTime      @default(now())
-    funcionario   User?         @relation(name: "FuncionarioAgendamentos", fields: [funcionarioId], references: [id])
-    funcionarioId String?
-    cliente       User?         @relation(name: "ClienteAgendamentos", fields: [clienteId], references: [id])
-    clienteId     String?
-
-    preco         Float?
-    confirmado    Boolean       @default(false)
+interface AgendamentoOnlyData {
+    data: string
 }
- */
 export const agendamentoRouter = createTRPCRouter({
-    getAgendamentosRecentes: privateProcedure.query(async ({ ctx }) => {
+    getRendaHoje: privateProcedure.query(async ({ ctx }) => {
+        const initToday = new Date()
+        initToday.setHours(0, 0, 0, 0)
+        const endToday = new Date()
+        endToday.setHours(23, 59, 59, 999)
+
         const { data: agendamentos, error } = await supabase
             .from('Agendamento')
-            // join with user table using hint disambiguantion
-            .select('*, funcionario:funcionarioId(nome), cliente:clienteId(nome)')
-            .order('data', { ascending: false })
-            .limit(5)
+            .select('preco')
+            .eq('confirmado', true)
+            .gte('data', initToday.toISOString())
+            .lte('data', endToday.toISOString())
         if (error) {
             throw new Error(error.message)
         }
         return agendamentos
     }),
+    getAgendamentosHoje: privateProcedure.query(async ({ ctx }) => {
+        const initToday = new Date()
+        initToday.setHours(0, 0, 0, 0)
+        const endToday = new Date()
+        endToday.setHours(23, 59, 59, 999)
+
+        const { data: agendamentos, error } = await supabase
+            .from('Agendamento')
+            .select('confirmado')
+            .gte('data', initToday.toISOString())
+            .lte('data', endToday.toISOString())
+        if (error) {
+            throw new Error(error.message)
+        }
+        return {
+            confirmados: agendamentos.filter(agendamento => agendamento.confirmado === true).length,
+            total: agendamentos.length
+        }
+    }),
+    getAgendamentosAnuais: privateProcedure.query(async ({ ctx }) => {
+        const { data: agendamentos, error } = await supabase
+            .from('Agendamento')
+            // join with user table using hint disambiguantion
+            .select('data')
+            .gte('data', new Date(new Date().getFullYear(), 0, 1).toISOString())
+            .lte('data', new Date(new Date().getFullYear(), 11, 31).toISOString())
+        if (error) {
+            throw new Error(error.message)
+        }
+        return agendamentos as AgendamentoOnlyData[]
+    }),
+    getAgendamentosRecentes: privateProcedure.query(async ({ ctx }) => {
+        const { data: agendamentos, error } = await supabase
+            .from('Agendamento')
+            // join with user table using hint disambiguantion
+            .select('*, funcionario:funcionarioId(nome), cliente:clienteId(nome)')
+            .order('data', { ascending: true })
+            .gte('data', new Date().toISOString())
+            .lte('data', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString())
+            .limit(5)
+        if (error) {
+            throw new Error(error.message)
+        }
+        return agendamentos as AgendamentoRecente[]
+    }),
     countAgendamentosEsseMes: privateProcedure.query(async ({ ctx }) => {
         const { data: agendamentos, error } = await supabase
             .from('Agendamento')
             .select('*', { count: 'exact' })
-            .order('data', { ascending: false })
             .gte('data', new Date().toISOString())
             .lte('data', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString())
             
