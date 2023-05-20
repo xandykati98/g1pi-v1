@@ -1,6 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar"
+import { api } from "~/utils/api"
 
 export function RecentSales() {
+  const { data, error } =  api.agendamento.getAgendamentosRecentes.useQuery()
+  
+
   return (
     <div className="space-y-8">
       <div className="flex items-center">

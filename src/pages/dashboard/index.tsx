@@ -24,9 +24,11 @@ import { api } from '~/utils/api';
 
 export default function Page() {
     const hello = api.example.hello.useQuery({ text: "from tRPC" });
+    const { data: agendamentosCount, error: agendamentosCountError} = api.agendamento.countAgendamentosEsseMes.useQuery();
+    
     if (hello.isLoading) return <div>Loading...</div>
     if (hello.error) return <div>Error: {hello.error.message}</div>
-     
+
     return <div className="flex-1 space-y-4 p-8 pt-6">
     <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
@@ -40,16 +42,16 @@ export default function Page() {
     </div>
     <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="analytics">
-            Analytics
-        </TabsTrigger>
-        <TabsTrigger value="reports" disabled>
-            Reports
-        </TabsTrigger>
-        <TabsTrigger value="notifications" disabled>
-            Notifications
-        </TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">
+                Analytics
+            </TabsTrigger>
+            <TabsTrigger value="reports" disabled>
+                Reports
+            </TabsTrigger>
+            <TabsTrigger value="notifications" disabled>
+                Notifications
+            </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -119,9 +121,11 @@ export default function Page() {
             </Card>
             <Card className="col-span-3">
             <CardHeader>
-                <CardTitle>Recent Sales</CardTitle>
+                <CardTitle>Agendamentos Próximos</CardTitle>
                 <CardDescription>
-                You made 265 sales this month.
+                {
+                    agendamentosCountError ? 'Erro ao carregar os agendamentos deste mês' : agendamentosCount ? `Um total de ${agendamentosCount} agendamentos estão marcados para este mês` : 'Carregando...'
+                }
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -129,6 +133,8 @@ export default function Page() {
             </CardContent>
             </Card>
         </div>
+        </TabsContent>
+        <TabsContent value="analytics">
         </TabsContent>
     </Tabs>
     </div>
