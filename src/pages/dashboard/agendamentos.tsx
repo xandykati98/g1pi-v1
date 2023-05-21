@@ -31,6 +31,7 @@ export default function Page() {
     const { data: agendamentos, error, isLoading, refetch } = api.agendamento.getAgendamentos.useQuery()
     const mutationToggleStatus = api.agendamento.toggleConfirmado.useMutation();
     const mutationDelete = api.agendamento.deleteAgendamentos.useMutation();
+
     const mutateExcluir = async (ids: string[]) => {
         await mutationDelete.mutateAsync({ids})
         await refetch()

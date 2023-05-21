@@ -6,7 +6,7 @@ import { dateToDDMMYYYY } from "~/utils/datestuff"
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-import { MoreHorizontal, Box, TrashIcon, ClipboardCopy } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, TrashIcon, ClipboardCopy } from "lucide-react"
  
 import { Button } from "components/ui/button"
 import {
@@ -18,11 +18,10 @@ import {
   DropdownMenuTrigger,
 } from "components/ui/dropdown-menu"
 import { Checkbox } from "components/ui/checkbox"
-import { AgendamentoJoin } from "~/server/api/routers/agendamento"
 import { Badge } from "components/ui/badge"
  
 
-export const columns: ColumnDef<AgendamentoJoin>[] = [
+export const columns: ColumnDef<User>[] = [
     {
         id: "select",
         header: ({ table }) => (
@@ -43,23 +42,20 @@ export const columns: ColumnDef<AgendamentoJoin>[] = [
         enableHiding: false,
       },
     {
-        accessorKey: "cliente.nome",
-        header: "Nome do cliente",
+        accessorKey: "nome",
+        header: "Nome",
     },
     {
-        accessorKey: "funcionario.nome",
-        header: "Nome do funcionário",
+        accessorKey: "email",
+        header: "Email",
     },
     {
-        accessorKey: "descricao",
-        header: "Descrição",
-    },
-    {
-        accessorKey: "data",
-        header: "Data de execução",
+        accessorKey: "isAdmin",
+        header: "Cargo",
         cell: ({ row }) => {
-            return dateToDDMMYYYY(new Date(row.original.data))
-        },
+            
+            return row.original.isAdmin ? <Badge>Administrador</Badge> : <Badge variant="outline">Funcionário</Badge>
+        }
     },
     {
         accessorKey: "createdAt",
@@ -69,27 +65,12 @@ export const columns: ColumnDef<AgendamentoJoin>[] = [
         },
     },
     {
-        accessorKey: "confirmado",
-        header: "Confirmado",
-        cell: ({ row }) => {
-            return row.original.confirmado ? <Badge>Confirmado</Badge> : <Badge variant={'outline'}>Pendente</Badge>
-        }
-    },
-    {
-        accessorKey: "preco",
-        header: "Preço",
-        cell: ({ row }) => {
-            return `R$ ${row.original.preco || 0}`
-        }
-    },
-    {
         id: "actions",
         cell: ({ row }) => {
-            interface ClienteMutate extends AgendamentoJoin {
+            interface FuncionarioMutate extends User {
                 mutateExcluir: () => void
-                mutateToggleStatus: () => void
             }
-            const agendamento = row.original as ClienteMutate
+            const cliente = row.original as FuncionarioMutate
             return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -101,9 +82,8 @@ export const columns: ColumnDef<AgendamentoJoin>[] = [
                 <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={agendamento.mutateToggleStatus}><Box className="mr-2 h-4 w-4"/> Alterar status </DropdownMenuItem>
-                <DropdownMenuItem onClick={agendamento.mutateExcluir}><TrashIcon className="mr-2 h-4 w-4"/> Excluir </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => void navigator.clipboard.writeText(agendamento.id)}><ClipboardCopy className="mr-2 h-4 w-4"/> Copiar ID do agendamento</DropdownMenuItem>
+                <DropdownMenuItem disabled={cliente.isAdmin} onClick={cliente.mutateExcluir}><TrashIcon className="mr-2 h-4 w-4"/> Excluir </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void navigator.clipboard.writeText(cliente.id)}><ClipboardCopy className="mr-2 h-4 w-4"/> Copiar ID</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
             )

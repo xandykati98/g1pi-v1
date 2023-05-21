@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar"
 import { AgendamentoJoin } from "~/server/api/routers/agendamento";
 import { api } from "~/utils/api"
 import { dateToDDMMYYYY } from "~/utils/datestuff";
+import { getSigla } from "~/utils/stringstuff";
 
 export function RecentSales({
   data, isLoading
@@ -9,10 +10,6 @@ export function RecentSales({
   data: AgendamentoJoin[]
   isLoading: boolean
 }) {
-  const getSigla = (nome: string) => {
-    const nomes = nome.split(" ");
-    return nomes.map((n) => n[0]).join("");
-  }
   
   if (isLoading) return <div></div>
 

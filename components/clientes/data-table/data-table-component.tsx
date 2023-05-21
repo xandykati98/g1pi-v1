@@ -123,10 +123,10 @@ export function DataTable<TData, TValue>({
     <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
-          {table.getFilteredRowModel().rows.length} cliente(s) selecionados.
+          {table.getFilteredRowModel().rows.length} item(s) selecionados.
           {
             table.getFilteredSelectedRowModel().rows.length > 0 && (
-              <Button variant={'destructive'} onClick={() => {void onDelete()}} className="ml-4">Deletar clientes</Button>
+              <Button variant={'destructive'} onClick={() => {void onDelete()}} className="ml-4">Deletar items</Button>
             )
           }
         </div>

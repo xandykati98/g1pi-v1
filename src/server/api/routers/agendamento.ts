@@ -68,15 +68,16 @@ export const agendamentoRouter = createTRPCRouter({
         initToday.setHours(0, 0, 0, 0)
         const endToday = new Date()
         endToday.setHours(23, 59, 59, 999)
-
         const { data: agendamentos, error } = await supabase
             .from('Agendamento')
-            .select('confirmado')
+            .select('confirmado, cliente:clienteId(nome)')
             .gte('data', initToday.toISOString())
             .lte('data', endToday.toISOString())
+            
         if (error) {
             throw new Error(error.message)
         }
+        
         return {
             confirmados: agendamentos.filter(agendamento => agendamento.confirmado === true).length,
             total: agendamentos.length

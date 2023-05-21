@@ -15,6 +15,14 @@ export const clienteRouter = createTRPCRouter({
         return data as User[]
     }),
     deleteClientes: privateProcedure.input(z.object({ ids: z.array(z.string()) })).mutation(async ({ ctx, input }) => {
+        try {
+            for await (const id of input.ids) {
+                await supabase.auth.admin.deleteUser(id)
+            }
+        } catch (e) {
+            console.log(e)
+        }
+
         const { error } = await supabase
         .from('User')
         .delete()
