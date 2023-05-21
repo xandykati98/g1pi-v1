@@ -6,7 +6,7 @@ import { dateToDDMMYYYY } from "~/utils/datestuff"
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-import { MoreHorizontal, ArrowUpDown } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, TrashIcon, ClipboardCopy } from "lucide-react"
  
 import { Button } from "components/ui/button"
 import {
@@ -58,26 +58,23 @@ export const columns: ColumnDef<User>[] = [
     {
         id: "actions",
         cell: ({ row }) => {
-            const payment = row.original
-    
+            interface ClienteMutate extends User {
+                mutateExcluir: () => void
+            }
+            const cliente = row.original as ClienteMutate
             return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">Abrir menu</span>
                     <MoreHorizontal className="h-4 w-4" />
                 </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                <DropdownMenuItem
-                    onClick={() => void navigator.clipboard.writeText(payment.id)}
-                >
-                    Copy payment ID
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>View customer</DropdownMenuItem>
-                <DropdownMenuItem>View payment details</DropdownMenuItem>
+                <DropdownMenuItem onClick={cliente.mutateExcluir}><TrashIcon className="mr-2 h-4 w-4"/> Excluir </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void navigator.clipboard.writeText(cliente.id)}><ClipboardCopy className="mr-2 h-4 w-4"/> Copiar ID</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
             )

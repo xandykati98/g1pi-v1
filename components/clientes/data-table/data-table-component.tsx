@@ -28,13 +28,22 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
 }
 
+interface DataTablePropsWithRefetch<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[]
+  data: TData[]
+  refetch: () => Promise<any>,
+  deleteMutate: (ids: string[]) => Promise<{ ok: boolean }>
+}
+
 export function DataTable<TData, TValue>({
   columns,
   data,
-}: DataTableProps<TData, TValue>) {
+  refetch,
+  deleteMutate
+}: DataTablePropsWithRefetch<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [rowSelection, setRowSelection] = React.useState({})
-  const deleteClientes = api.cliente.deleteClientes.useMutation()
+
   const table = useReactTable({
     data,
     columns,
@@ -53,10 +62,11 @@ export function DataTable<TData, TValue>({
       const selectedRows = table.getRowModel().rows.filter((row) =>
         row.getIsSelected()
       )
-      const ids = selectedRows.map((row) => (row.original as User).id)
-      const { ok } = await deleteClientes.mutateAsync({ ids })
+      const ids = selectedRows.map((row) => (row.original as { id: string }).id)
+      const { ok } = await deleteMutate(ids)
       if (ok) {
-        alert('Clientes deletados com sucesso!')
+        alert('Itens deletados com sucesso!')
+        await refetch()
         setRowSelection({})
       } else throw new Error('Algo de errado aconteceu!')
     } catch (error) {
@@ -102,7 +112,7 @@ export function DataTable<TData, TValue>({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                Nenhum cliente com esses parametros.
               </TableCell>
             </TableRow>
           )}

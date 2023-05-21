@@ -10,7 +10,7 @@ const data = [
     i: 0
   },
   {
-    name: "Feb",
+    name: "Fev",
     total: 0,
     i: 1
   },
@@ -20,12 +20,12 @@ const data = [
     i: 2
   },
   {
-    name: "Apr",
+    name: "Abr",
     total: 0,
     i: 3
   },
   {
-    name: "May",
+    name: "Mai",
     total: 0,
     i: 4
   },
@@ -40,17 +40,17 @@ const data = [
     i: 6
   },
   {
-    name: "Aug",
+    name: "Ago",
     total: 0,
     i: 7
   },
   {
-    name: "Sep",
+    name: "Set",
     total: 0,
     i: 8
   },
   {
-    name: "Oct",
+    name: "Out",
     total: 0,
     i: 9
   },
@@ -60,7 +60,7 @@ const data = [
     i: 10
   },
   {
-    name: "Dec",
+    name: "Dez",
     total: 0,
     i: 11
   },
@@ -71,7 +71,9 @@ export function Overview() {
   if (isLoading) return <div></div>
   const monthMap = new Map<number, number>()
   for (const { data } of agendamentos) {
-    const month = new Date(data).getMonth()
+    const agendamentoDate = new Date(data) 
+    if (agendamentoDate.getFullYear() !== new Date().getFullYear()) continue
+    const month = agendamentoDate.getMonth()
     const total = monthMap.get(month) || 0
     monthMap.set(month, total + 1)
   }

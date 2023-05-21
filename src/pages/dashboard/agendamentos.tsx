@@ -23,15 +23,21 @@ import { api } from '~/utils/api';
 import { dateToDDMMYYYY } from '~/utils/datestuff';
 import { useState } from 'react';
 import { DataTable } from 'components/clientes/data-table/data-table-component';
-import { columns } from 'components/clientes/data-table/columns-clientes';
+import { columns } from 'components/clientes/data-table/columns-agendamentos';
 import { Input } from 'components/ui/input';
 import { User } from '@prisma/client';
 
 export default function Page() {
-    const { data: clientes, error, isLoading, refetch } = api.cliente.getClientes.useQuery()
-    const mutation = api.cliente.deleteClientes.useMutation();
+    const { data: agendamentos, error, isLoading, refetch } = api.agendamento.getAgendamentos.useQuery()
+    const mutationToggleStatus = api.agendamento.toggleConfirmado.useMutation();
+    const mutationDelete = api.agendamento.deleteAgendamentos.useMutation();
     const mutateExcluir = async (ids: string[]) => {
-        await mutation.mutateAsync({ids})
+        await mutationDelete.mutateAsync({ids})
+        await refetch()
+        return { ok: true }
+    }
+    const mutateToggleStatus = async (id: string, new_val: boolean) => {
+        await mutationToggleStatus.mutateAsync({id, new_val})
         await refetch()
         return { ok: true }
     }
@@ -39,16 +45,16 @@ export default function Page() {
     if (isLoading) return <div></div>
     if (error) return <div>Erro: {error.message}</div>
 
-    const filteredClientes = clientes.filter(cliente => cliente.nome.toLowerCase().includes(nameFilter.toLowerCase()))
+    const filteredAgendamentos = agendamentos.filter(agendamento => agendamento.cliente.nome.toLowerCase().includes(nameFilter.toLowerCase()))
 
     return <div className="flex-1 space-y-4 p-8 pt-6">
     <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Clientes</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Agendamentos</h2>
         <div className="flex items-center space-x-2">
         
             <Input
                 type="search"
-                placeholder="Busque por nome"
+                placeholder="Busque por nome de cliente"
                 className="h-9 md:w-[100px] lg:w-[300px]"
                 onChange={e => setNameFilter(e.target.value)}
                 value={nameFilter}
@@ -59,10 +65,13 @@ export default function Page() {
             </Button>
         </div>
     </div>
-    <DataTable columns={columns} deleteMutate={mutateExcluir} refetch={refetch} data={filteredClientes
-        .sort((a, b) => new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime())
-        .map(cliente => ({...cliente, mutateExcluir: () => mutateExcluir([cliente.id]) }))
-        } />
+    <DataTable columns={columns} deleteMutate={mutateExcluir} refetch={refetch} data={filteredAgendamentos
+    .map(agendamento => ({
+        ...agendamento, 
+        mutateExcluir: () => mutateExcluir([agendamento.id]),
+        mutateToggleStatus: () => mutateToggleStatus(agendamento.id, !agendamento.confirmado ),
+    })).sort((a, b) => new Date(b.data).getTime()-new Date(a.data).getTime())
+    } />
     </div>
 }
 

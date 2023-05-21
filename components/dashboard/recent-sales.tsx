@@ -1,12 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar"
-import { AgendamentoRecente } from "~/server/api/routers/agendamento";
+import { AgendamentoJoin } from "~/server/api/routers/agendamento";
 import { api } from "~/utils/api"
 import { dateToDDMMYYYY } from "~/utils/datestuff";
 
 export function RecentSales({
   data, isLoading
 }: {
-  data: AgendamentoRecente[]
+  data: AgendamentoJoin[]
   isLoading: boolean
 }) {
   const getSigla = (nome: string) => {

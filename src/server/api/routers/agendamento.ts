@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { faker } from '@faker-js/faker';
 import { Agendamento } from '@prisma/client';
 
-export interface AgendamentoRecente extends Agendamento {
+export interface AgendamentoJoin extends Agendamento {
     funcionario: {
         nome: string
     }
@@ -16,6 +16,36 @@ interface AgendamentoOnlyData {
     data: string
 }
 export const agendamentoRouter = createTRPCRouter({
+    toggleConfirmado: privateProcedure.input(z.object({ id: z.string(), new_val: z.boolean() })).mutation(async ({ ctx, input }) => {
+        const { data, error } = await supabase
+            .from('Agendamento')
+            .update({ confirmado: input.new_val })
+            .eq('id', input.id)
+        if (error) {
+            throw new Error(error.message)
+        }
+        return { ok: true }
+    }),
+    getAgendamentos: privateProcedure.query(async ({ ctx }) => {
+        const { data: agendamentos, error } = await supabase
+            .from('Agendamento')
+            // join with user table using hint disambiguantion
+            .select('*, funcionario:funcionarioId(nome), cliente:clienteId(nome)')
+        if (error) {
+            throw new Error(error.message)
+        }
+        return agendamentos as AgendamentoJoin[]
+    }),
+    deleteAgendamentos: privateProcedure.input(z.object({ ids: z.array(z.string()) })).mutation(async ({ ctx, input }) => {
+        const { error } = await supabase
+            .from('Agendamento')
+            .delete()
+            .in('id', input.ids)
+        if (error) {
+            throw new Error(error.message)
+        }
+        return { ok: true }
+    }),
     getRendaHoje: privateProcedure.query(async ({ ctx }) => {
         const initToday = new Date()
         initToday.setHours(0, 0, 0, 0)
@@ -76,7 +106,7 @@ export const agendamentoRouter = createTRPCRouter({
         if (error) {
             throw new Error(error.message)
         }
-        return agendamentos as AgendamentoRecente[]
+        return agendamentos as AgendamentoJoin[]
     }),
     countAgendamentosEsseMes: privateProcedure.query(async ({ ctx }) => {
         const { data: agendamentos, error } = await supabase
@@ -90,4 +120,30 @@ export const agendamentoRouter = createTRPCRouter({
         }
         return agendamentos.length
     }),
+    __gerarAgendamentos: privateProcedure.mutation(async ({ ctx }) => {
+        const {data:ids_funcionarios} = (await supabase.from('User').select('id').eq('isFuncionario', true))
+        const {data:ids_clientes} = (await supabase.from('User').select('id').eq('isCliente', true))
+        if (!ids_clientes) return { ok: false }
+        if (!ids_funcionarios) return { ok: false }
+
+        const agendamentos = []
+
+        for (let i = 0; i < 100; i++) {
+            const agendamento = {
+                id: faker.datatype.uuid(),
+                data: faker.date.anytime().toISOString(),
+                preco: faker.datatype.number({ min: 10, max: 100 }),
+                confirmado: faker.datatype.boolean(),
+                funcionarioId: faker.helpers.arrayElement(ids_funcionarios).id as string,
+                clienteId: faker.helpers.arrayElement(ids_clientes).id as string,
+                descricao: faker.lorem.sentence(),
+                createdAt: faker.date.anytime().toISOString()
+            }
+            agendamentos.push(agendamento)
+        }
+        for (const agendamento of agendamentos) {
+            const a = await supabase.from('Agendamento').upsert(agendamento)
+            console.log(a.statusText, a.error)
+        }
+    })
 })
