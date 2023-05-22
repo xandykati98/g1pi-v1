@@ -14,6 +14,17 @@ export const clienteRouter = createTRPCRouter({
         if (error) throw new Error(error.message)
         return data as User[]
     }),
+    getClientesByName: privateProcedure.input(z.object({ nome: z.string() })).query(async ({ ctx, input }) => {
+        const { data, error } = await supabase
+        .from('User')
+        .select('nome, id')
+        .eq('isCliente', true)
+        .limit(5)
+        .ilike('nome', `%${input.nome}%`)
+
+        if (error) throw new Error(error.message)
+        return data as User[]
+    }),
     deleteClientes: privateProcedure.input(z.object({ ids: z.array(z.string()) })).mutation(async ({ ctx, input }) => {
         try {
             for await (const id of input.ids) {

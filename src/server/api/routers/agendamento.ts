@@ -2,6 +2,7 @@ import { createTRPCRouter, publicProcedure, privateProcedure, supabase } from '.
 import { z } from 'zod'
 import { faker } from '@faker-js/faker';
 import { Agendamento } from '@prisma/client';
+import { prisma } from '~/server/db';
 
 export interface AgendamentoJoin extends Agendamento {
     funcionario: {
@@ -120,6 +121,28 @@ export const agendamentoRouter = createTRPCRouter({
             throw new Error(error.message)
         }
         return agendamentos.length
+    }),
+    createAgendamento: privateProcedure.input(z.object({
+        data: z.string(),
+        preco: z.number(),
+        confirmado: z.boolean(),
+        funcionarioId: z.string(),
+        clienteId: z.string(),
+        descricao: z.string().optional()
+    })).mutation(async ({ ctx, input }) => {
+        const { data, error } = await supabase.from('Agendamento').insert([{
+            id: faker.datatype.uuid(),
+            data: new Date(input.data),
+            preco: input.preco,
+            confirmado: input.confirmado,
+            funcionarioId: input.funcionarioId,
+            clienteId: input.clienteId,
+            descricao: input.descricao
+        }])
+        if (error) {
+            throw new Error(error.message)
+        }
+        return { ok: true }
     }),
     __gerarAgendamentos: privateProcedure.mutation(async ({ ctx }) => {
         const {data:ids_funcionarios} = (await supabase.from('User').select('id').eq('isFuncionario', true))

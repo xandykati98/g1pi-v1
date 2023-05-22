@@ -10,7 +10,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "components/ui/tooltip"
-import { Link } from "lucide-react";
+import Link from 'components/active_link'
+
 
 export default function Example() {
   const auth_context = useContext(AuthContext)
@@ -40,7 +41,7 @@ export default function Example() {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
                 {
-                auth_context.isFuncionario ? (
+                !!auth_context.isFuncionario ? (
                   <Link
                     href="/dashboard"
                   >
