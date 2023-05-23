@@ -58,7 +58,9 @@ export const columns: ColumnDef<AgendamentoJoin>[] = [
         accessorKey: "data",
         header: "Data de execução",
         cell: ({ row }) => {
-            return dateToDDMMYYYY(new Date(row.original.data))
+            const date = new Date(row.original.data)
+            
+            return `${dateToDDMMYYYY(date)} ${date.getHours()}:${(date.getMinutes().toString()+'0').slice(0,2)}`
         },
     },
     {

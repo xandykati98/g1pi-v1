@@ -37,7 +37,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 </div>
                 <div className="ml-auto flex items-center space-x-4">
-                <Search />
+                {
+                    //<Search />
+                }
                 <UserNav />
                 </div>
             </div>
