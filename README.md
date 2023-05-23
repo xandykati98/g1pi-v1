@@ -1,4 +1,10 @@
-# Create T3 App
+# G1PI - Projeto Integrador
+- [Site](https://g1pi-v1.vercel.app/)
+### Acesso
+- Email: 111@gmail.com
+- Senha: 123456
+
+## Create T3 App
 
 This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
 
