@@ -256,11 +256,12 @@ export default function Page() {
                                 </label>
                             </div>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
+                        <div className="grid grid-cols-4  items-center gap-4">
                             <Label htmlFor="cliente" className="text-right">
                                 Cliente<span className="text-[red]">*</span>
                             </Label>
-                            <div>
+                            
+                            <div className='w-full'>
                                 <ListarClientes setClienteId={setClienteId}/>
                             </div>
                         </div>

@@ -144,6 +144,7 @@ export const agendamentoRouter = createTRPCRouter({
         }
         return { ok: true }
     }),
+    /*
     __gerarAgendamentos: privateProcedure.mutation(async ({ ctx }) => {
         const {data:ids_funcionarios} = (await supabase.from('User').select('id').eq('isFuncionario', true))
         const {data:ids_clientes} = (await supabase.from('User').select('id').eq('isCliente', true))
@@ -170,4 +171,5 @@ export const agendamentoRouter = createTRPCRouter({
             console.log(a.statusText, a.error)
         }
     })
+    */
 })

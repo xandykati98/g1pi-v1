@@ -20,7 +20,11 @@ import {
 import { Checkbox } from "components/ui/checkbox"
 import { AgendamentoJoin } from "~/server/api/routers/agendamento"
 import { Badge } from "components/ui/badge"
- 
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+  } from "components/ui/popover"
 
 export const columns: ColumnDef<AgendamentoJoin>[] = [
     {
@@ -45,6 +49,17 @@ export const columns: ColumnDef<AgendamentoJoin>[] = [
     {
         accessorKey: "cliente.nome",
         header: "Nome do cliente",
+        cell: ({ row }) => {
+            if (row.original.clienteOnlyNome) {
+                return <Popover>
+                    <PopoverTrigger className="font-underline">
+                        {row.original.clienteOnlyNome}
+                    </PopoverTrigger>
+                    <PopoverContent>Este cliente não tem perfil</PopoverContent>
+                </Popover>
+            }
+            return row.original.clienteOnlyNome || row.original.cliente.nome
+        }
     },
     {
         accessorKey: "funcionario.nome",

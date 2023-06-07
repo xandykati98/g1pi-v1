@@ -32,6 +32,7 @@ model Agendamento {
     funcionarioId String?
     cliente       User?         @relation(name: "ClienteAgendamentos", fields: [clienteId], references: [id])
     clienteId     String?
+    clienteOnlyNome String?
 
     preco         Float?
     confirmado    Boolean       @default(false)
